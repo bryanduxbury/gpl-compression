@@ -24,14 +24,12 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.io.compress.Decompressor;
 
 /**
  * A {@link Decompressor} based on the lzo algorithm.
  * http://www.oberhumer.com/opensource/lzo/
- * 
  */
-class LzoDecompressor implements Decompressor {
+public class LzoDecompressor {
   private static final Log LOG = 
     LogFactory.getLog(LzoDecompressor.class.getName());
 

@@ -19,20 +19,17 @@
 package com.hadoop.compression.lzo;
 
 import java.io.IOException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.compress.Compressor;
 
 /**
  * A {@link Compressor} based on the lzo algorithm.
  * http://www.oberhumer.com/opensource/lzo/
  * 
  */
-class LzoCompressor implements Compressor {
+public class LzoCompressor {
   private static final Log LOG = 
     LogFactory.getLog(LzoCompressor.class.getName());
 
@@ -55,7 +52,6 @@ class LzoCompressor implements Compressor {
   @SuppressWarnings("unused")
   private long lzoCompressor = 0;       // The actual lzo compression function.
   private int workingMemoryBufLen = 0;  // The length of 'working memory' buf.
-  @SuppressWarnings("unused")
   private ByteBuffer workingMemoryBuf;      // The 'working memory' for lzo.
 
   /**
@@ -186,27 +182,6 @@ class LzoCompressor implements Compressor {
     return nativeLzoLoaded;
   }
 
-  public LzoCompressor(Configuration conf) {
-    reinit(conf);
-  }
-
-  /**
-   * Reinitialize from a configuration, possibly changing compression codec
-   */
-  //@Override (this method isn't in vanilla 0.20.2, but is in CDH3b3 and YDH)
-  public void reinit(Configuration conf) {
-    // It's possible conf is null in the case that the compressor was got from a pool,
-    // and the new user of the codec doesn't specify a particular configuration
-    // to CodecPool.getCompressor(). So we use the defaults.
-    if (conf == null) {
-      conf = new Configuration();
-    }
-    LzoCompressor.CompressionStrategy strategy = LzoCodec.getCompressionStrategy(conf);
-    int bufferSize = LzoCodec.getBufferSize(conf);
-
-    init(strategy, bufferSize);
-  }
-
   /** 
    * Creates a new compressor using the specified {@link CompressionStrategy}.
    * 
@@ -309,10 +284,6 @@ class LzoCompressor implements Compressor {
     // Note how much data is being fed to lzo
     userBufOff += uncompressedDirectBufLen;
     userBufLen -= uncompressedDirectBufLen;
-  }
-
-  public synchronized void setDictionary(byte[] b, int off, int len) {
-    // nop
   }
 
   /** {@inheritDoc} */
@@ -422,13 +393,6 @@ class LzoCompressor implements Compressor {
    */
   long getDirectBufferSize() {
     return directBufferSize;
-  }
-  
-  /**
-   * Noop.
-   */
-  public synchronized void end() {
-    // nop
   }
 
   /** used for tests */

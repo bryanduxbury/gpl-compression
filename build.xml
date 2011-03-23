@@ -18,7 +18,7 @@
  <http://www.gnu.org/licenses/>.
 -->
 
-<project name="Hadoop-GPL-Compression" default="compile"
+<project name="gpl-compression" default="compile"
    xmlns:ivy="antlib:org.apache.ivy.ant"> 
 
   <!-- Load all the default properties, and any the user wants    -->
@@ -26,9 +26,9 @@
   <property file="${user.home}/build.properties" />
   <property file="${basedir}/build.properties" />
  
-  <property name="Name" value="Hadoop GPL Compression"/>
-  <property name="name" value="hadoop-lzo"/>
-  <property name="version" value="0.4.10"/>
+  <property name="Name" value="GPL Compression"/>
+  <property name="name" value="gpl-compression"/>
+  <property name="version" value="0.1.0"/>
   <property name="final.name" value="${name}-${version}"/>
   <property name="year" value="2008"/>
 

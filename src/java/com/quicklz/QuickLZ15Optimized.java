@@ -287,12 +287,12 @@ public final class QuickLZ15Optimized {
     a[i+3] = (byte) (value >>> 24);
   }
 
-  static public byte[] decompress(byte[] source) {
+  static public int decompress(final byte[] source, final byte[] dest) {
     int size = (int) sizeDecompressed(source);
     int src = headerLen(source);
     int dst = 0;
     long cword_val = 1;
-    byte[] destination = new byte[size];
+    final byte[] destination = dest;
     int[] hashtable = new int[4096];
     byte[] hash_counter = new byte[4096];
     int last_matchstart = size - UNCONDITIONAL_MATCHLEN - UNCOMPRESSED_END - 1;
@@ -306,9 +306,8 @@ public final class QuickLZ15Optimized {
       throw new RuntimeException("Java version only supports level 1 and 3");
 
     if ((source[0] & 1) != 1) {
-      byte[] d2 = new byte[size];
-      System.arraycopy(source, headerLen(source), d2, 0, size);
-      return d2;
+      System.arraycopy(source, headerLen(source), dest, 0, size);
+      return size;
     }
 
     for (;;) {
@@ -423,7 +422,7 @@ public final class QuickLZ15Optimized {
             src++;
             cword_val = cword_val >>> 1;
           }
-          return destination;
+          return size;
         }
       }
     }

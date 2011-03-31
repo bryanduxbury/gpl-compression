@@ -32,6 +32,11 @@ public class TestQuickLZ15Optimized extends TestCase {
       byte[] newCompressed = new byte[testCase.length + 400];
       int lenCompressed = QuickLZ15Optimized.compress(testCase, 0, newCompressed, 0, testCase.length, 1);
       assertEquals("test case #" + i, ByteBuffer.wrap(origCompressed), ByteBuffer.wrap(newCompressed, 0, lenCompressed));
+
+      byte[] decompressed = new byte[testCase.length];
+//      int lenDecompressed = QuickLZ15Optimized.decompress(newCompressed, decompressed);
+      assertEquals(testCase.length, QuickLZ15Optimized.decompress(newCompressed, decompressed));
+      assertEquals(ByteBuffer.wrap(testCase), ByteBuffer.wrap(decompressed));
     }
   }
 

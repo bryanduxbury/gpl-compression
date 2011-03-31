@@ -20,7 +20,7 @@ public class BenchmarkCompression {
       startingPoint += r.nextInt(255);
     }
 
-    for (int trial = 0; trial < 1; trial++) {
+    for (int trial = 0; trial < Integer.parseInt(args[0]); trial++) {
       long start = System.currentTimeMillis();
       long end = System.currentTimeMillis();
 
@@ -30,18 +30,18 @@ public class BenchmarkCompression {
         compressed.add(QuickLZ15.compress(data, 1));
       }
       end = System.currentTimeMillis();
-      System.err.println(compressed.size());
+      System.err.println(compressed.get(0).length);
       System.out.println(trial + "\tQuickLZ15(1)\t" + throughput(data, start, end));
 
       List<Integer> compressedLengths = new ArrayList<Integer>();
       start = System.currentTimeMillis();
       byte[] outBuf = new byte[data.length + 400];
       for (int i = 0; i < NUM_REPS; i++) {
-        compressedLengths.add(QuickLZ15Optimized.compress(data, outBuf, 1));
-        System.out.println(compressedLengths.get(0));
+        compressedLengths.add(QuickLZ15Optimized.compress(data, 0, outBuf, 0, data.length, 1));
+//        System.out.println(compressedLengths.get(0));
       }
       end = System.currentTimeMillis();
-      System.err.println(compressedLengths.size());
+      System.err.println(compressedLengths.get(0));
       System.out.println(trial + "\tQuickLZ15Optimized(1)\t" + throughput(data, start, end));
     }
   }

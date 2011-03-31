@@ -30,7 +30,7 @@ public class TestQuickLZ15Optimized extends TestCase {
 
       // now check the new impl
       byte[] newCompressed = new byte[testCase.length + 400];
-      int lenCompressed = QuickLZ15Optimized.compress(testCase, newCompressed, 1);
+      int lenCompressed = QuickLZ15Optimized.compress(testCase, 0, newCompressed, 0, testCase.length, 1);
       assertEquals("test case #" + i, ByteBuffer.wrap(origCompressed), ByteBuffer.wrap(newCompressed, 0, lenCompressed));
     }
   }

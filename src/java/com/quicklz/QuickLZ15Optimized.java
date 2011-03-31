@@ -56,25 +56,23 @@ public final class QuickLZ15Optimized {
 
   private static final byte HEADER_PROTOTYPE = (1 << 6) | (0 << 4);
   
-  private static void write_header(byte[] dst, int level, boolean compressible,
-      int size_compressed, int size_decompressed) {
-    dst[0] = (byte) (HEADER_PROTOTYPE | ((byte) (2 | (compressible ? 1 : 0))) | ((byte) (level << 2)));
-    fast_write4(dst, 1, size_decompressed);
-    fast_write4(dst, 5, size_compressed);
+  private static void write_header(byte[] dst, int off, int level,
+      boolean compressible, int size_compressed, int size_decompressed) {
+    dst[off] = (byte) (HEADER_PROTOTYPE | ((byte) (2 | (compressible ? 1 : 0))) | ((byte) (level << 2)));
+    fast_write4(dst, off + 1, size_decompressed);
+    fast_write4(dst, off + 5, size_compressed);
   }
 
-  public static int compress(final byte[] source, final byte[] dest, final int level) {
-    int src = 0;
+  public static int compress(final byte[] source, final int srcOff, final byte[] dest, final int dstOff, final int length, final int level) {
+    int src = srcOff;
     int dst = DEFAULT_HEADERLEN + CWORD_LEN;
     long cword_val = 0x80000000L;
     int cword_ptr = DEFAULT_HEADERLEN;
-//    byte[] destination = new byte[source.length + 400];
     int[][] hashtable;
     int[] cachetable = new int[HASH_VALUES];
     byte[] hash_counter = new byte[HASH_VALUES];
-//    byte[] d2;
     int fetch = 0;
-    int last_matchstart = (source.length - UNCONDITIONAL_MATCHLEN
+    int last_matchstart = (length - UNCONDITIONAL_MATCHLEN
         - UNCOMPRESSED_END - 1);
     int lits = 0;
 
@@ -86,20 +84,18 @@ public final class QuickLZ15Optimized {
     else
       hashtable = new int[HASH_VALUES][QLZ_POINTERS_3];
 
-    if (source.length == 0)
+    if (length == 0)
       return 0;
 
     if (src <= last_matchstart)
       fetch = fast_read3(source, src);
-//      fetch = (int) fast_read(source, src, 3);
 
     while (src <= last_matchstart) {
       if ((cword_val & 1) == 1) {
         if (src > 3 * (source.length >> 2) && dst > src - (src >> 5)) {
-//          d2 = new byte[source.length + DEFAULT_HEADERLEN];
-          write_header(dest, level, false, source.length, source.length + DEFAULT_HEADERLEN);
-          System.arraycopy(source, 0, dest, DEFAULT_HEADERLEN, source.length);
-          return source.length + DEFAULT_HEADERLEN;
+          write_header(dest, dstOff, level, false, length, length + DEFAULT_HEADERLEN);
+          System.arraycopy(source, 0, dest, dstOff + DEFAULT_HEADERLEN, length);
+          return length + DEFAULT_HEADERLEN;
         }
 
         fast_write4(dest, cword_ptr, (cword_val >>> 1) | 0x80000000L);
@@ -149,13 +145,11 @@ public final class QuickLZ15Optimized {
               dst += 2;
             } else {
               int f = hash | (matchlen << 16);
-//              fast_write(dest, dst, f, 3);
               fast_write3(dest, dst, f);
               dst += 3;
             }
           }
           lits = 0;
-//          fetch = (int) fast_read(source, src, 3);
           fetch = fast_read3(source, src);
         } else {
           lits++;
@@ -167,7 +161,6 @@ public final class QuickLZ15Optimized {
           fetch = ((fetch >>> 8) & 0xffff) | ((((int)source[src + 2]) & 0xff) << 16);
         }
       } else {
-//        fetch = (int) fast_read(source, src, 3);
         fetch = fast_read3(source, src);
 
         int o, offset2;
@@ -199,7 +192,6 @@ public final class QuickLZ15Optimized {
         if (matchlen >= 3 && src - o < 131071) {
           int offset = src - o;
           for (int u = 1; u < matchlen; u++) {
-//            fetch = (int) fast_read(source, src + u, 3);
             fetch = fast_read3(source, src);
             hash = ((fetch >>> 12) ^ fetch) & (HASH_VALUES - 1);
             c = hash_counter[hash]++;
@@ -210,15 +202,12 @@ public final class QuickLZ15Optimized {
           cword_val = ((cword_val >>> 1) | 0x80000000L);
 
           if (matchlen == 3 && offset <= 63) {
-//            fast_write(dest, dst, offset << 2, 1);
             fast_write1(dest, dst, offset << 2);
             dst++;
           } else if (matchlen == 3 && offset <= 16383) {
-//            fast_write(dest, dst, (offset << 2) | 1, 2);
               fast_write2(dest, dst, (offset << 2) | 1);
             dst += 2;
           } else if (matchlen <= 18 && offset <= 1023) {
-//            fast_write(dest, dst, ((matchlen - 3) << 2) | (offset << 6) | 2, 2);
             fast_write2(dest, dst, ((matchlen - 3) << 2) | (offset << 6) | 2);
             dst += 2;
           } else if (matchlen <= 33) {
@@ -237,9 +226,8 @@ public final class QuickLZ15Optimized {
       }
     }
 
-    while (src <= source.length - 1) {
+    while (src <= length - 1) {
       if ((cword_val & 1) == 1) {
-//        fast_write(dest, cword_ptr, (long)((cword_val >>> 1) | 0x80000000L), 4);
         fast_write4(dest, cword_ptr, (long)((cword_val >>> 1) | 0x80000000L));
         cword_ptr = dst;
         dst += CWORD_LEN;
@@ -255,7 +243,7 @@ public final class QuickLZ15Optimized {
       cword_val = (cword_val >>> 1);
     }
     fast_write(dest, cword_ptr, (long)((cword_val >>> 1) | 0x80000000L), CWORD_LEN);
-    write_header(dest, level, true, source.length, dst);
+    write_header(dest, dstOff, level, true, length, dst);
 
     return dst;
   }

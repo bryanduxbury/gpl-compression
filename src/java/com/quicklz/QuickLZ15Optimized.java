@@ -36,22 +36,22 @@ public final class QuickLZ15Optimized {
   private final static int QLZ_POINTERS_1 = 1;
   private final static int QLZ_POINTERS_3 = 16;
 
-  static int headerLen(byte[] source) {
-    return ((source[0] & 2) == 2) ? 9 : 3;
+  static int headerLen(byte[] source, int off) {
+    return ((source[off] & 2) == 2) ? 9 : 3;
   }
 
-  static public long sizeDecompressed(byte[] source) {
-    if (headerLen(source) == 9)
-      return fast_read(source, 5, 4);
+  static public long sizeDecompressed(byte[] source, int off) {
+    if (headerLen(source, off) == 9)
+      return fast_read(source, off + 5, 4);
     else
-      return fast_read(source, 2, 1);
+      return fast_read(source, off + 2, 1);
   }
 
-  static public long sizeCompressed(byte[] source) {
-    if (headerLen(source) == 9)
-      return fast_read(source, 1, 4);
+  static public long sizeCompressed(byte[] source, int off) {
+    if (headerLen(source, off) == 9)
+      return fast_read(source, off + 1, 4);
     else
-      return fast_read(source, 1, 1);
+      return fast_read(source, off + 1, 1);
   }
 
   private static final byte HEADER_PROTOTYPE = (1 << 6) | (0 << 4);
@@ -287,9 +287,9 @@ public final class QuickLZ15Optimized {
     a[i+3] = (byte) (value >>> 24);
   }
 
-  static public int decompress(final byte[] source, final byte[] dest) {
-    int size = (int) sizeDecompressed(source);
-    int src = headerLen(source);
+  static public int decompress(final byte[] source, final byte[] dest, final int srcOff, final int destOff) {
+    int size = (int) sizeDecompressed(source, srcOff);
+    int src = srcOff + headerLen(source, srcOff);
     int dst = 0;
     long cword_val = 1;
     final byte[] destination = dest;
@@ -300,13 +300,13 @@ public final class QuickLZ15Optimized {
     int hash;
     int fetch = 0;
 
-    int level = (source[0] >>> 2) & 0x3;
+    int level = (source[srcOff] >>> 2) & 0x3;
 
     if (level != 1 && level != 3)
       throw new RuntimeException("Java version only supports level 1 and 3");
 
-    if ((source[0] & 1) != 1) {
-      System.arraycopy(source, headerLen(source), dest, 0, size);
+    if ((source[srcOff] & 1) != 1) {
+      System.arraycopy(source, srcOff + headerLen(source, srcOff), dest, destOff, size);
       return size;
     }
 
@@ -366,12 +366,12 @@ public final class QuickLZ15Optimized {
           offset2 = (int) (dst - offset);
         }
 
-        destination[dst + 0] = destination[offset2 + 0];
-        destination[dst + 1] = destination[offset2 + 1];
-        destination[dst + 2] = destination[offset2 + 2];
+        destination[destOff + dst + 0] = destination[destOff + offset2 + 0];
+        destination[destOff + dst + 1] = destination[destOff + offset2 + 1];
+        destination[destOff + dst + 2] = destination[destOff + offset2 + 2];
 
         for (int i = 3; i < matchlen; i += 1) {
-          destination[dst + i] = destination[offset2 + i];
+          destination[destOff + dst + i] = destination[destOff + offset2 + i];
         }
         dst += matchlen;
 
@@ -383,7 +383,7 @@ public final class QuickLZ15Optimized {
             hashtable[hash] = last_hashed;
             hash_counter[hash] = 1;
             fetch = fetch >>> 8 & 0xffff
-                | (((int) destination[last_hashed + 3]) & 0xff) << 16;
+                | (((int) destination[destOff + last_hashed + 3]) & 0xff) << 16;
           }
           fetch = (int) fast_read(source, src, 3);
         } else {
@@ -392,7 +392,7 @@ public final class QuickLZ15Optimized {
         last_hashed = dst - 1;
       } else {
         if (dst <= last_matchstart) {
-          destination[dst] = source[src];
+          destination[destOff + dst] = source[src];
           dst += 1;
           src += 1;
           cword_val = cword_val >>> 1;
@@ -417,7 +417,7 @@ public final class QuickLZ15Optimized {
               cword_val = 0x80000000L;
             }
 
-            destination[dst] = source[src];
+            destination[destOff + dst] = source[src];
             dst++;
             src++;
             cword_val = cword_val >>> 1;
